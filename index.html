@@ -1,20 +1,13 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>ULTMAN — VK Analytics Auth</title>
-  <style>
-    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:760px;margin:64px auto;padding:0 20px;line-height:1.55;background:#111;color:#eee}
-    .card{background:#1b1b1b;border:1px solid #333;border-radius:16px;padding:24px}
-    .muted{color:#aaa}
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h1>ULTMAN — VK Analytics</h1>
-    <p>Страница авторизации подготовлена.</p>
-    <p class="muted">VK ID будет подключён после создания приложения ULTMAN Analytics и получения App ID.</p>
-  </div>
-</body>
-</html>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ULTMAN — VK Analytics Auth</title>
+<script src="https://unpkg.com/@vkid/sdk@2.6.1/dist-sdk/umd/index.js"></script>
+<style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:760px;margin:64px auto;padding:0 20px;line-height:1.55;background:#111;color:#eee}.card{background:#1b1b1b;border:1px solid #333;border-radius:16px;padding:24px}button{background:#07f;color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:16px;cursor:pointer}button.secondary{background:#333}.ok{color:#8bd17c}.err{color:#ff8c8c}.muted{color:#aaa}textarea{width:100%;box-sizing:border-box;background:#111;color:#eee;border:1px solid #444;border-radius:8px;padding:10px;min-height:180px}</style>
+</head><body><div class="card"><h1>ULTMAN — VK Analytics</h1>
+<p id="status">Готово к авторизации VK ID с минимальным правом stats.</p>
+<p class="muted">Приложение: ULTMAN Analytics · App ID 54809298</p>
+<button id="login">Войти через VK ID</button>
+<div id="result" hidden><p class="ok">Токен получен в вашем браузере. Он не сохраняется в GitHub Pages.</p><p>Скопируйте конфигурацию авторизации и сохраните только на своём компьютере. Не отправляйте её в чат и не сохраняйте в GitHub.</p><textarea id="token" readonly></textarea><p><button class="secondary" id="copy">Скопировать конфигурацию</button></p></div><pre id="error" class="err"></pre></div>
+<script>(()=>{const APP_ID=54809298,REDIRECT='https://andreiteibus-dot.github.io/ULTMAN-VK-AUTH/',SCOPE='stats';const VKID=window.VKIDSDK,status=document.getElementById('status'),errorBox=document.getElementById('error');function randomString(len=64){const chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~';const a=new Uint32Array(len);crypto.getRandomValues(a);return Array.from(a,x=>chars[x%chars.length]).join('');}const store=localStorage;let verifier=store.getItem('ultman_vk_verifier'),state=store.getItem('ultman_vk_state');if(!verifier){verifier=randomString(64);store.setItem('ultman_vk_verifier',verifier);}if(!state){state=randomString(32);store.setItem('ultman_vk_state',state);}VKID.Config.init({app:APP_ID,redirectUrl:REDIRECT,state,codeVerifier:verifier,scope:SCOPE,mode:VKID.ConfigAuthMode.Redirect});document.getElementById('login').onclick=()=>{errorBox.textContent='';verifier=randomString(64);state=randomString(32);store.setItem('ultman_vk_verifier',verifier);store.setItem('ultman_vk_state',state);VKID.Config.init({app:APP_ID,redirectUrl:REDIRECT,state,codeVerifier:verifier,scope:SCOPE,mode:VKID.ConfigAuthMode.Redirect});VKID.Auth.login().catch(e=>errorBox.textContent='Ошибка запуска VK ID: '+JSON.stringify(e));};const q=new URLSearchParams(location.search),code=q.get('code'),deviceId=q.get('device_id'),oauthError=q.get('error');if(oauthError){errorBox.textContent='VK ID: '+oauthError+' — '+(q.get('error_description')||'');}else if(code&&deviceId){document.getElementById('login').hidden=true;status.textContent='VK ID вернул код. Получаю пользовательский токен…';if(!verifier){errorBox.textContent='Не найден PKCE verifier. Начните авторизацию заново.';}else{VKID.Auth.exchangeCode(code,deviceId,verifier).then(tokens=>{if(!tokens.access_token)throw new Error('access_token отсутствует в ответе');if(!tokens.refresh_token)throw new Error('refresh_token отсутствует в ответе');document.getElementById('token').value=JSON.stringify({access_token:tokens.access_token,refresh_token:tokens.refresh_token,device_id:deviceId},null,2);document.getElementById('result').hidden=false;status.innerHTML='<span class="ok">Авторизация завершена.</span>';history.replaceState({},document.title,REDIRECT);store.removeItem('ultman_vk_verifier');store.removeItem('ultman_vk_state');}).catch(e=>{errorBox.textContent='Ошибка обмена кода на токен: '+JSON.stringify(e);status.textContent='Авторизация не завершена.';});}}document.getElementById('copy').onclick=async()=>{await navigator.clipboard.writeText(document.getElementById('token').value);document.getElementById('copy').textContent='Конфигурация скопирована';};})();</script></body></html>
